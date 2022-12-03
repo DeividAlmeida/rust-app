@@ -1,12 +1,13 @@
 use tokio;
-mod connection;
+mod services;
 
 #[tokio::main]
 async fn main() {
-  connection::mongodb().await.unwrap();
+  services::read().await.unwrap();
 }
 
 
 
 
-//https://www.mongodb.com/developer/languages/rust/rust-mongodb-crud-tutorial/
+//https://github.com/mehmetsefabalik/rust-mongodb-example
+//https://doc.rust-lang.org/book/ch05-03-method-syntax.html
