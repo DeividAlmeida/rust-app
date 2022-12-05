@@ -21,3 +21,8 @@ async fn main() {
 }
 //https://github.com/mehmetsefabalik/rust-mongodb-example
 //https://doc.rust-lang.org/book/ch05-03-method-syntax.html
+
+
+//https://practice.rs/lifetime/static.html preciso ler amanhã, aprender tbm sobre usize e isize
+
+// refatorar codigo 
