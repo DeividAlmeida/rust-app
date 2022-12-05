@@ -30,6 +30,7 @@ dependencies = [
  "chrono",
  "futures",
  "mongodb",
+ "rand",
  "serde",
  "tokio",
 ]
