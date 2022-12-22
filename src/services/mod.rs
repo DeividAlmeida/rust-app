@@ -8,7 +8,6 @@ mod connection;
 
 pub async fn read()-> Result<(), Box<dyn Error>>  {
   let raffled:(usize, &'static str, i32) = raffle();
-
   let index: usize = raffled.0;
   let item:&str = raffled.1;
   let order: i32 = raffled.2;
@@ -27,7 +26,7 @@ pub async fn read()-> Result<(), Box<dyn Error>>  {
  
 
   let results: Vec<Document> = cursor.try_collect().await.unwrap();
-  println!("{:?}", results[index]);
+
   Ok(())
 }
 
