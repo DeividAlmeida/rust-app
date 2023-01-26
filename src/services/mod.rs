@@ -1,57 +1,62 @@
 use bson::doc;
 use futures::{ TryStreamExt};
-use mongodb::{bson::Document, Client, Collection, Cursor, options::FindOptions};
-use std::{error::Error, time::Duration};
+use mongodb::{bson::Document, options::FindOptions};
+use std::{error::Error};
 use rand::Rng;
 
 mod connection; 
 
-pub async fn read()-> Result<(), Box<dyn Error>>  {
-  let raffled:(usize, &'static str, i32) = raffle();
-  let index: usize = raffled.0;
-  let item:&str = raffled.1;
-  let order: i32 = raffled.2;
+pub async fn main_publisher()-> bson::Document {
+  let (index, item, order) = raffle();
 
-  let client:Client =  connection::mongodb().await?;
-  let options: FindOptions = FindOptions::builder()
-  .limit(3)
-  .sort(doc! { 
-    "amount": 1, 
-    item : order}
-  )
-  .build();
+  let client = connection::mongodb().await.unwrap();
+  let options = FindOptions::builder()
+      .limit(3)
+      .sort(doc! { 
+          "amount": 1, 
+          item : order}
+      )
+      .build();
 
-  let coll:Collection<Document> =  client.database("designations").collection::<Document>("publishers");
-  let cursor:Cursor<Document> = coll.find(doc! {"type":{"$gt":1}}, options).await?;
- 
+  let coll = client.database("designations").collection::<Document>("publishers");
 
-  let results: Vec<Document> = cursor.try_collect().await.unwrap();
+  let frist_publisher_search = coll.find(doc! {"type":{ "$gt":1 }}, options.clone()).await.unwrap();
+  let frist_publisher_results: Vec<Document> = frist_publisher_search.try_collect().await.unwrap();
+  let frist_publisher = frist_publisher_results[index].clone();
+  let frist_publisher_gender = frist_publisher.get("gender").unwrap();
+  let frist_publisher_name = frist_publisher.get("name");
+  
+  let secound_publisher_results = coll.find(doc! {"name":{"$ne":frist_publisher_name.clone()},"type":{ "$lte":2 },"gender":{ "$eq":frist_publisher_gender.clone() }}, options.clone()).await.unwrap();
+  let secound_publisher: Vec<Document> = secound_publisher_results.try_collect().await.unwrap();
+  let secound_publisher_name = secound_publisher[0].get("name");
 
-  Ok(())
+ doc! {
+  "main": frist_publisher_name,
+  "helper":secound_publisher_name
+ }
 }
 
 fn raffle() -> (usize, &'static str, i32) {
   let mut rng = rand::thread_rng();
-
-  let orders: Vec<i32> = vec![-1,1];
-  let order_index: usize = rng.gen_range(0..2);
-  let order: i32 = orders[order_index];
+  const ORDER: [i32; 2] = [-1, 1];
+  const ITEMS: [&str; 3] = ["type", "name", "updated_at"];
   
-  let items: Vec<&str> = vec!["_id","type","name","created_at","updated_at"];
-  let item_index: usize = rng.gen_range(0..5);
-  let item: &str = items[item_index];
-  let results_index: usize = rng.gen_range(0..3);
- (results_index, item, order )
+  let item_index: usize = rng.gen_range(0..ITEMS.len());
+  let order_index: usize = rng.gen_range(0..ORDER.len());
+  
+  (item_index, ITEMS[item_index], ORDER[order_index])
 }
 
-
-pub async fn create_publisher(designation: Document)-> Result<(), Box<dyn Error>>  {
-  let client:Client =  connection::mongodb().await?;
-  let collection:Collection<Document> = client.database("designations").collection("publishers");
-  let handle=  tokio::task::spawn(async move {
-    collection.insert_one(designation, None).await
-  });
-  tokio::time::timeout(Duration::from_secs(5), handle).await???;
+pub async fn create_publisher(designation: Document) -> Result<(), Box<dyn Error>> {
+  let client = connection::mongodb().await?;
+  let collection = client.database("designations").collection("publishers");
+  collection.insert_one(designation, None).await?;
   Ok(())
 }
- 
+
+pub async fn create_presentation(participants: Document) -> Result<(), Box<dyn Error>> {
+  let client = connection::mongodb().await?;
+  let collection = client.database("designations").collection("presentations");
+  collection.insert_one(participants, None).await?;
+  Ok(())
+}
