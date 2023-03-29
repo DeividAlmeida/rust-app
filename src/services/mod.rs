@@ -5,8 +5,10 @@ use futures::executor::block_on;
 use mongodb::{bson::Document, options::FindOptions};
 use std::{error::Error};
 use rand::Rng;
-
+use crate::models::presentation::Presentation;
 mod connection; 
+
+
 
 fn raffle() -> (usize, &'static str, i32) {
   const ORDER: [i32; 2] = [-1, 1];
@@ -46,6 +48,14 @@ async fn get_publisher (params:Option<bson::Document>, options: FindOptions) -> 
   let publishers_found = publisher_collection.find(params, options.clone()).await.unwrap();
   
   publishers_found.try_collect().await.unwrap()
+}
+
+pub async fn get_presentation () -> Result<Presentation, Box<dyn Error>> {
+  let publisher_collection = connection::designations_presentations_conn().await.unwrap();
+  let publishers_found = publisher_collection.find(None, None).await.unwrap();
+  
+  let a = publishers_found.try_collect().await;
+  Ok(a)
 }
 
 pub async fn create_presentation() -> Result<(), Box<dyn Error>> {
