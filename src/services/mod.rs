@@ -1,14 +1,11 @@
 use bson::doc;
-use chrono::Utc;
 use futures::{ TryStreamExt};
 use futures::executor::block_on;
-use mongodb::{bson::Document, options::FindOptions};
+use mongodb::{bson::Document, options::FindOptions, Collection,};
 use std::{error::Error};
 use rand::Rng;
 use crate::models::presentation::Presentation;
 mod connection; 
-
-
 
 fn raffle() -> (usize, &'static str, i32) {
   const ORDER: [i32; 2] = [-1, 1];
@@ -50,12 +47,11 @@ async fn get_publisher (params:Option<bson::Document>, options: FindOptions) -> 
   publishers_found.try_collect().await.unwrap()
 }
 
-pub async fn get_presentation () -> Result<Presentation, Box<dyn Error>> {
+pub async fn get_presentation () -> Vec<Presentation> {
   let publisher_collection = connection::designations_presentations_conn().await.unwrap();
   let publishers_found = publisher_collection.find(None, None).await.unwrap();
-  
-  let a = publishers_found.try_collect().await;
-  Ok(a)
+  publishers_found.try_collect().await.unwrap()
+
 }
 
 pub async fn create_presentation() -> Result<(), Box<dyn Error>> {
@@ -79,11 +75,11 @@ pub async fn create_presentation() -> Result<(), Box<dyn Error>> {
     "type":{ "$lte":2 }
   }),options.clone()));
 
-  publisher_collection.insert_one(doc! {
-    "main": main_publisher[index].get("name").unwrap(),
-    "helper":second_publisher[index].get("name").unwrap(),
-      "created_at": Utc::now()
-  }, None).await?;
+  // publisher_collection.insert_one(doc! {
+  //   "main": main_publisher[index].get("name").unwrap(),
+  //   "helper":second_publisher[index].get("name").unwrap(),
+  //   "created_at": Utc::now()
+  // }, None).await?;
   
     update_publisher(main_publisher[index].clone()).await.unwrap();
     update_publisher(second_publisher[index].clone()).await.unwrap();
