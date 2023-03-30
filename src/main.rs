@@ -1,50 +1,80 @@
+use actix_web::{get, post, web::{ Path, self }, App, HttpResponse, HttpServer, Responder};
+use bson::{doc, oid::ObjectId};
 use chrono::Utc;
-use tokio;
-use bson::doc;
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use mongodb::options::FindOptions;
+use models::publisher::Publisher;
 mod services;
 mod models;
 
-#[tokio::main]
-async fn main2() {
- 
-  let who: u8 =1;
-  if who == 1 {
-    let see = services::create_presentation().await;
-    print!("{:?}",see);
-  } else {
-    services::create_publisher(doc! {
-      "name":"Algostinha",
-      "type":1,
-      "amount":0,
-      "gender":"f",
-      "active":true,
-      "created_at": Utc::now(),
-      "updated_at": Utc::now(),
-    }).await.unwrap();
+// #[tokio::main]
+// async fn main() {
+//     let result = services::create_presentation().await;
+//     print!("{:?}",result.unwrap().inserted_id);
+
+// }
+
+
+
+#[get("/presentation")]
+async fn get_presentations() -> impl Responder {
+  
+  let presentations = services::get_presentation().await;
+  match presentations {
+    Ok(response) => HttpResponse::Ok().json(response),
+    Err(error) => HttpResponse::InternalServerError().body(error.to_string())
   }
 }
 
+#[post("/presentation")]
+async fn create_presentations() -> impl Responder {
+  let res = services::create_presentation().await;
 
-
-#[get("/")]
-async fn hello() -> HttpResponse {
-  let presentations = services::get_presentation().await;
-    HttpResponse::Ok().json(presentations)
+  match res {
+    Ok(response) => HttpResponse::Ok().json(response.inserted_id),
+    Err(error) => HttpResponse::InternalServerError().body(error.to_string())
+  }
 }
 
-#[post("/echo")]
-async fn echo(req_body: String) -> impl Responder {
-    HttpResponse::Ok().body(req_body)
+#[get("/publisher/{id}")]
+async fn get_publishers( path: Path<String>) -> impl Responder {
+  let id = path.into_inner();
+  let id_as_object = ObjectId::parse_str(id).unwrap();
+  let options = FindOptions::builder()
+  .limit(1)
+  .build();
+  let publisher = services::get_publisher(Some(doc! {"_id": id_as_object}), options.clone()).await;
+
+  HttpResponse::Ok().json(publisher)
 }
 
+#[post("/publisher")]
+async fn create_publisher(req: web::Json<Publisher>) -> impl Responder {
+
+  let res = services::create_publisher(Publisher {
+    id:None,
+    name: req.name.clone(),
+    gender: req.gender.clone(),
+    r#type:req.r#type.clone(),
+    amount:Some(0),
+    active:Some(true),
+    created_at:Some(Utc::now().timestamp_millis()),
+    updated_at:Some(Utc::now().timestamp_millis()),
+  }).await;
+
+  match res {
+    Ok(response) => HttpResponse::Ok().json(response.inserted_id),
+    Err(error) => HttpResponse::InternalServerError().body(error.to_string()),
+  }
+}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
-            .service(hello)
-            .service(echo)
+        .service(get_presentations)
+        .service(create_presentations)
+        .service(get_publishers)
+        .service(create_publisher)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
