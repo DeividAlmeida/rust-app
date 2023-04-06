@@ -6,13 +6,11 @@ files:
 hooks:
   BeforeInstall:
     - location: scripts/install_dependencies.sh
-      timeout: 1000
+      timeout: 300
       runas: root
     - location: scripts/start_server.sh
-      timeout: 1000
+      timeout: 300
       runas: root
-    - location: scripts/build.sh
-      timeout: 1000
       runas: root
   ApplicationStop:
     - location: scripts/stop_server.sh
