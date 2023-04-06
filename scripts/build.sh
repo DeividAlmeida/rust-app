@@ -1,2 +1,2 @@
-#!/var/www/html
+#!/bin/bash
 cargo build
