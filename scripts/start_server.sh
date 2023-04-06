@@ -1,2 +1,6 @@
-#!/var/www/html
-cargo build
+#!/bin/bash
+service httpd start
+
+cd /var/www/html
+
+cargo build 
