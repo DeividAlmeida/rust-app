@@ -1,4 +1,5 @@
-use actix_web::{get, post, web::{ Path, self }, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, post, web::{ Path, self, ServiceConfig }, HttpResponse, Responder};
+use shuttle_actix_web::ShuttleActixWeb;
 use bson::{doc, oid::ObjectId};
 use chrono::Utc;
 use mongodb::options::FindOptions;
@@ -67,18 +68,19 @@ async fn create_publisher(req: web::Json<Publisher>) -> impl Responder {
   }
 }
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
-        App::new()
-        .service(get_presentations)
-        .service(create_presentations)
-        .service(get_publishers)
-        .service(create_publisher)
-    })
-    .bind(("127.0.0.1", 8080))?
-    .run()
-    .await
+
+
+#[shuttle_runtime::main]
+async fn actix_web(
+) -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
+    let config = move |cfg: &mut ServiceConfig| {
+        cfg.service(get_presentations);
+        cfg.service(create_presentations);
+        cfg.service(get_publishers);
+        cfg.service(create_publisher);
+    };
+
+    Ok(config.into())
 }
 
 //https://practice.rs/lifetime/static.html preciso ler amanhã, aprender tbm sobre usize e isize
