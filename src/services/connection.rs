@@ -1,10 +1,12 @@
 use mongodb::{Client, options::{ClientOptions, ResolverConfig}, Collection};
 use crate::models::presentation::Presentation;
 use crate::models::publisher::Publisher;
-
+use std::env;
+use dotenv::dotenv;
 
 pub async fn mongodb() -> Result<Client, mongodb::error::Error> {
-  let client_uri : &str = "mongodb://localhost:27017";
+  dotenv().ok();
+  let client_uri  = env::var("DB_URL").expect("DB_URL not set");
   let options:ClientOptions =  ClientOptions::parse_with_resolver_config(&client_uri, ResolverConfig::cloudflare()).await.unwrap();
   Client::with_options(options)
 }

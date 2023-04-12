@@ -14,7 +14,10 @@ mod models;
 
 // }
 
-
+#[get("/")]
+async fn get_status() -> impl Responder {
+  HttpResponse::Ok().body("API is running")
+}
 
 #[get("/presentation")]
 async fn get_presentations() -> impl Responder {
@@ -68,8 +71,6 @@ async fn create_publisher(req: web::Json<Publisher>) -> impl Responder {
   }
 }
 
-
-
 #[shuttle_runtime::main]
 async fn actix_web(
 ) -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
@@ -78,6 +79,7 @@ async fn actix_web(
         cfg.service(create_presentations);
         cfg.service(get_publishers);
         cfg.service(create_publisher);
+        cfg.service(get_status);
     };
 
     Ok(config.into())
