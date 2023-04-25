@@ -1,5 +1,6 @@
 use mongodb::bson::oid::ObjectId;
 use serde::{Serialize, Deserialize};
+use chrono::{DateTime, Utc};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Presentation {
@@ -7,5 +8,6 @@ pub struct Presentation {
     pub id: Option<ObjectId>,
     pub main: String,
     pub helper: String,
-    pub created_at: i64,
+    #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
+    pub created_at: chrono::DateTime<Utc>,
 }

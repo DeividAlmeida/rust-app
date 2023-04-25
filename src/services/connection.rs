@@ -1,3 +1,4 @@
+use bson::Document;
 use mongodb::{Client, options::{ClientOptions, ResolverConfig}, Collection};
 use crate::models::presentation::Presentation;
 use crate::models::publisher::Publisher;
@@ -11,7 +12,7 @@ pub async fn mongodb() -> Result<Client, mongodb::error::Error> {
   Client::with_options(options)
 }
 
-pub async fn designations_publishers_conn() -> Result<Collection<Publisher>, mongodb::error::Error> {
+pub async fn designations_publishers_conn() -> Result<Collection<Document>, mongodb::error::Error> {
   let client = mongodb().await?;
   let collection = client.database("designations").collection("publishers");
   Ok(collection)
